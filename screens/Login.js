@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
-import { TextInput, Button, Text, IconButton } from 'react-native-paper';
-import { useMyContextProvider, login } from '../srx/index';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Image, View, TouchableOpacity } from 'react-native';
+import { TextInput, Button, Text, HelperText } from 'react-native-paper';
+import { useMyContextProvider, login } from '../index';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -10,79 +10,83 @@ const Login = ({ navigation }) => {
   const [controller, dispatch] = useMyContextProvider();
   const { userLogin } = controller;
   const [showPassword, setShowPassword] = useState(false);
-  const [isValidEmail, setIsValidEmail] = useState(false);
-  const [isValidPassword, setIsValidPassword] = useState(false);
+  const [disableLogin, setDisableLogin] = useState(true);
+
+  const hasErrorEmail = () => !email.includes("@");
+  const hasErrorPassword = () => password.length < 6;
+
+  useEffect(() => {
+    setDisableLogin(email.trim() === '' || password.trim() === '' || hasErrorEmail() || hasErrorPassword());
+  }, [email, password, hasErrorEmail, hasErrorPassword]);
 
   const handleLogin = () => {
     login(dispatch, email, password);
   };
 
   useEffect(() => {
-    if (userLogin !== null) navigation.navigate('Home');
-  }, [userLogin]);
-
-  useEffect(() => {
-    setIsValidEmail(email.includes('@'));
-  }, [email]);
-
-  useEffect(() => {
-    setIsValidPassword(password.length >= 6);
-  }, [password]);
-
-  const isDisabled = !isValidEmail || !isValidPassword || email === '' || password === '';
+    console.log(userLogin)
+    if (userLogin != null) {
+      if (userLogin.role === "admin")
+        navigation.navigate("Admin")
+      else if (userLogin.role === "customer")
+        navigation.navigate("Customer")
+    }
+  }, [userLogin])
 
   return (
-    <View style={{ flex:1, justifyContent:'center' }}>
-      <View style={{ alignItems: 'center', marginBottom: 20 }}>
-        <Image
-          source={require('../assets/logo.jpg')}
-          style={{ width: 400, height: 200,}}
-          resizeMode="contain"
-        />
-      </View>
+    <View style={{ flex: 1, padding: 10 }}>
+      <Text style={{
+        fontSize: 40,
+        fontWeight: "bold",
+        alignSelf: "center",
+        color: "green",
+        marginTop: 100,
+        marginBottom: 50
+      }}>
+        Login
+      </Text>
       <TextInput
-        label="Email"
+        label={"Email"}
         value={email}
         onChangeText={setEmail}
-        mode="outlined"
-        style={{ margin: 10 }}
       />
-      <View style={styles.passwordContainer}>
+      <HelperText type='error' visible={hasErrorEmail()}>
+        Địa chỉ Email không hợp lệ
+      </HelperText>
+      <View style={{ flexDirection: "row" }}>
         <TextInput
-          label="Password"
+          label={"Password"}
           value={password}
           onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          mode="outlined"
-          style={{ margin: 10,flex:1 }}
+          secureTextEntry={showPassword}
+          style={{ flex: 1 }}
         />
-        <IconButton
-          icon={showPassword ? 'eye-off' : 'eye'}
-          onPress={() => setShowPassword(!showPassword)}
-        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Image
+            source={showPassword ? require('../assets/eye.png') : require('../assets/eye-hidden.png')}
+            style={{ width: 20, height: 20, margin: 20 }}
+          />
+        </TouchableOpacity>
       </View>
-      <Button
-        mode="contained"
-        onPress={handleLogin}
-        buttonColor='pink'
-        textColor='black'
-        style={{ margin: 10 }}
-        disabled={isDisabled}
-      >
+      <HelperText type='error' visible={hasErrorPassword()}>
+        Password có ít nhất 6 ký tự
+      </HelperText>
+      <Button mode='contained' textColor='black' buttonColor='pink' onPress={handleLogin} disabled={disableLogin}>
         Login
       </Button>
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={{ textAlign: 'center', color: 'blue' }}>Don't have an account? Sign up</Text>
-      </TouchableOpacity>
+      <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+        <Text>Dont have an account ?</Text>
+        <Button onPress={() => navigation.navigate("Register")}>
+          Create new account
+        </Button>
+      </View>
+      <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+        <Button onPress={() => navigation.navigate("ForgotPassword")}>
+          Forgot Password
+        </Button>
+      </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-});
 
 export default Login;

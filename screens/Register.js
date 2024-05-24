@@ -1,107 +1,126 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
-import { createAccount } from '../srx/index';
+import { Image, View } from 'react-native';
+import { TextInput, Button, Text, HelperText } from 'react-native-paper';
+import { createAccount } from '../index';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { IconButton } from 'react-native-paper';
 
 const Register = ({ navigation }) => {
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [role] = useState('');
   const [email, setEmail] = useState('');
   const [fullName, setFullname] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isValidEmail, setIsValidEmail] = useState(false);
-  const [isValidPassword, setIsValidPassword] = useState(false);
-  const [isValidConfirmPassword, setIsValidConfirmPassword] = useState(false);
+  const [disableCreate, setDisableCreate] = useState(true);
+
+  const hasErrorFullName = () => fullName === "";
+  const hasErrorEmail = () => !email.includes('@');
+  const hasErrorPassword = () => password.length < 6;
+  const hasErrorPasswordConfirm = () => confirmPassword !== password;
 
   useEffect(() => {
-    setIsValidEmail(email.includes('@'));
-  }, [email]);
-
-  useEffect(() => {
-    setIsValidPassword(password.length >= 6);
-  }, [password]);
-
-  useEffect(() => {
-    setIsValidConfirmPassword(password === confirmPassword);
-  }, [confirmPassword, password]);
+    setDisableCreate(
+      hasErrorFullName() ||
+      hasErrorEmail() ||
+      hasErrorPassword() ||
+      hasErrorPasswordConfirm() ||
+      phone.trim() === '' ||
+      address.trim() === ''
+    );
+  }, [fullName, email, password, confirmPassword, phone, address, hasErrorFullName, hasErrorEmail, hasErrorPassword, hasErrorPasswordConfirm]);
 
   const handleRegister = () => {
-    createAccount(email, password, fullName);
+    createAccount(email, password, fullName, phone, address, role);
   };
 
-  const isDisabled = !isValidEmail || !isValidPassword || !isValidConfirmPassword || email === '' || password === '' || confirmPassword === ''|| fullName ==='';
-
   return (
-    <View style={{flex:1, justifyContent:'center'}}>
-      <View style={{ margin:20}}>
-        <Image 
-          source={require('../assets/logo1.jpg')}
-          style={{ width: 300, height: 250, marginBottom: 10 }}
-          resizeMode="contain"
-        />
-      </View>
+    <View style={{ flex: 1, padding: 10 }}>
+      <Text style={{
+        fontSize: 30,
+        fontWeight: "bold",
+        alignSelf: "center",
+        color: "green",
+        marginTop: 50,
+        marginBottom: 50
+      }}> Register New Account </Text>
       <TextInput
-        label="Full Name"
+        label={"Full Name"}
         value={fullName}
         onChangeText={setFullname}
-        mode="outlined"
-        style={{ margin: 10 }}
       />
+      <HelperText type='error' visible={hasErrorFullName()}>
+        Full name không được phép để trống
+      </HelperText>
       <TextInput
-        label="Email"
+        label={"Email"}
         value={email}
         onChangeText={setEmail}
-        mode="outlined"
-        style={{ margin: 10 }}
       />
-      <View style={styles.passwordContainer}>
+      <HelperText type='error' visible={hasErrorEmail()}>
+        Địa chỉ email không hợp lệ
+      </HelperText>
+      <View style={{ flexDirection: "row" }}>
         <TextInput
-          label="Password"
+          label={"Password"}
           value={password}
           onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          mode="outlined"
-          style={{ margin: 10, flex: 1 }}
+          secureTextEntry={showPassword}
+          style={{ flex: 1 }}
         />
-        <IconButton 
-          icon={showPassword ? 'eye-off' : 'eye'}
-          onPress={() => setShowPassword(!showPassword)}
-        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Image
+            source={showPassword ? require('../assets/eye.png') : require('../assets/eye-hidden.png')}
+            style={{ width: 20, height: 20, margin: 20 }}
+          />
+        </TouchableOpacity>
       </View>
-      <View style={styles.passwordContainer}>
+      <HelperText type='error' visible={hasErrorPassword()}>
+        Password ít nhất 6 kí tự
+      </HelperText>
+      <View style={{ flexDirection: "row" }}>
         <TextInput
-          label="Confirm Password"
+          label={"Confirm Password"}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          secureTextEntry={!showConfirmPassword}
-          mode="outlined"
-          style={{ margin: 10, flex: 1 }}
+          secureTextEntry={showConfirmPassword}
+          style={{ flex: 1 }}
         />
-        <IconButton 
-          icon={showConfirmPassword ? 'eye-off' : 'eye'}
-          onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-        />
+        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+          <Image
+            source={showConfirmPassword ? require('../assets/eye.png') : require('../assets/eye-hidden.png')}
+            style={{ width: 20, height: 20, margin: 20 }}
+          />
+        </TouchableOpacity>
       </View>
-      <Button buttonColor='pink' textColor='black' mode="contained" onPress={handleRegister} style={{ margin: 10 }} disabled={isDisabled}>
-        Register
+      <HelperText type='error' visible={hasErrorPasswordConfirm()}>
+        Confirm Password phải giống với Password
+      </HelperText>
+      <TextInput
+        label={"Address"}
+        value={address}
+        onChangeText={setAddress}
+        style={{ marginBottom: 20 }}
+      />
+      <TextInput
+        label={"Phone"}
+        value={phone}
+        onChangeText={setPhone}
+        style={{ marginBottom: 20 }}
+      />
+      <Button textColor='black' buttonColor='pink' mode='contained' onPress={handleRegister} disabled={disableCreate}>
+        Create New Account
       </Button>
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={{ textAlign: 'center', color: 'blue' }}>
-          Already have an account? Log in
-        </Text>
-      </TouchableOpacity>
+      <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+        <Text>Do you have an account ?</Text>
+        <Button onPress={() => navigation.navigate("Login")}>
+          Login Account
+        </Button>
+      </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-});
 
 export default Register;

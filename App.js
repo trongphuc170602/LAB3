@@ -1,47 +1,48 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import Login from './screens/Login';
-import Home from './screens/Home';
-import Register from './screens/Register';
-import { MyContextControllerProvider } from './srx/index';
-
-const Stack = createStackNavigator();
+import firestore from '@react-native-firebase/firestore'
+import auth from '@react-native-firebase/auth'
+import { MyContextControllerProvider } from './index';
+import Router from './routers/Router';
+import { MenuProvider } from 'react-native-popup-menu';
 
 const App = () => {
-  const headerOptions = {
-    headerTitleAlign: 'center',
-    headerStyle: {
-      backgroundColor: '#fff',
-    },
-  };
+  //Create admin
+  const USERS = firestore().collection("USERS")
+  const admin = {
+    fullName: "Admin",
+    email: "admin@gmail.com",
+    password: "123456",
+    phone: "0912685449",
+    address: "Bình Dương",
+    role: "admin" 
+  }
+  useEffect(()=>{
+    USERS.doc(admin.email)
+    .onSnapshot(
+      u => {
+        if (!u.exists)
+        {
+          auth().createUserWithEmailAndPassword(admin.email, admin.password)
+          .then(response =>
+            {
+              USERS.doc(admin.email).set(admin)
+              console.log("Add new account admin")
+            })
+        }
+      }
+    )
+  }, [])
+  
+  //Code show router
   return (
     <MyContextControllerProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen 
-            name="Login" 
-            component={Login} 
-            options={{...headerOptions,}}
-          />
-          <Stack.Screen 
-            name="Home" 
-            component={Home} 
-            options={{ 
-              ...headerOptions,
-              title: 'Home',
-              headerLeft: () => null,
-            }} 
-          />
-          <Stack.Screen 
-            name="Register" 
-            component={Register} 
-            options={headerOptions} 
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <MenuProvider>
+        <NavigationContainer>
+          <Router/>
+        </NavigationContainer>
+      </MenuProvider>
     </MyContextControllerProvider>
   );
-};
-
-export default App;
+}
+export default App
